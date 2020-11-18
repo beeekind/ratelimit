@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  redisratelimit: 
+    container_name: redis 
+    image: redis:alpine 
+    ports:
+      - '6379:6379'  
+    command: redis-server --requirepass password 
+    volumes:
+      - redis-ratelimit/:/data  
+
+volumes:
+  redis-ratelimit:   
