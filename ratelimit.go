@@ -76,7 +76,7 @@ func (rl *RateLimit) SetBackend(backend Backend) {
 // This method returns an error if the underlying calls to RateLimit.backend.GetState() or RateLimit.backend.SetState()
 // return an error. A negative time.Duration will also be returned. The behavior of a negative time.Duration is insignificant
 // when used in time.Sleep() calls, but it felt nominally important to differentiate the response of a failed Allow() beyond err != nil.
-func (rl *RateLimit) Allow(key string) (time.Duration, error) {
+func (rl *RateLimit) Allow(key string) (nextRefill time.Duration, err error) {
 	rl.mu.Lock()
 	defer rl.mu.Unlock()
 
@@ -123,9 +123,11 @@ func (rl *RateLimit) Allow(key string) (time.Duration, error) {
 	intervalHasPassed := (previousLastAccessedTimestampNS + int64(rl.interval)) <= currentTime
 	if !intervalHasPassed {
 		elapsed := time.Duration(currentTime - previousLastAccessedTimestampNS)
-		return rl.interval - elapsed, nil  
+		nextRefill := rl.interval - elapsed
+		return nextRefill, nil  
 	}
 
+	//
 	return rl.interval, nil
 }
 

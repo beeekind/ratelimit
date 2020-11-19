@@ -14,6 +14,7 @@ package radix
 // and strconv.FormatInt(val, 10).
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -25,7 +26,11 @@ type Backend struct {
 	pool *radix.Pool
 }
 
-// New returns a new instance of radix.Backend 
+// these keys are aliased to reduce storage requirements
+const allowanceKey = "0"
+const accessedKey = "1"
+
+// New returns a new instance of radix.Backend
 func New(pool *radix.Pool) *Backend {
 	return &Backend{
 		pool: pool,
@@ -33,9 +38,9 @@ func New(pool *radix.Pool) *Backend {
 }
 
 // SetState ...
-func (b *Backend) SetState(key string, allowance int64, lastAllowedTimestampNS int64) error {
+func (b *Backend) SetState(key string, allowance int64, lastAccessedTimestampNS int64) error {
 	var result string
-	if err := b.pool.Do(radix.Cmd(&result, "HSET", key, "0", fmt.Sprint(allowance), "1", fmt.Sprint(lastAllowedTimestampNS))); err != nil {
+	if err := b.pool.Do(radix.Cmd(&result, "HSET", key, allowanceKey, strconv.FormatInt(allowance, 10), accessedKey, strconv.FormatInt(lastAccessedTimestampNS, 10))); err != nil {
 		return err
 	}
 
@@ -44,21 +49,28 @@ func (b *Backend) SetState(key string, allowance int64, lastAllowedTimestampNS i
 
 // GetState ...
 func (b *Backend) GetState(key string) (allowance int64, lastAllowedTimeStampNS int64, err error) {
-	var hset map[string]string
-	if err := b.pool.Do(radix.Cmd(&hset, "HGETALL", key)); err != nil {
-		return 0, 0, err
+	var hashSet map[string]string
+	if err := b.pool.Do(radix.Cmd(&hashSet, "HGETALL", key)); err != nil {
+		return 0, 0, fmt.Errorf("failed to getState: %w", err)
 	}
 
-	a, ok := hset["0"]
-	c, ok2 := hset["1"]
-	if !ok || !ok2 {
-		return 0, 0, nil
+	allowanceStr, allowanceExists := hashSet[allowanceKey]
+	lastAllowedTimeStampNSStr, lastAllowedTimeStampNSExists := hashSet[accessedKey]
+	if allowanceExists || lastAllowedTimeStampNSExists {
+		return 0, 0, errors.New("failed to getState: hashSet did not contain key")
 	}
 
-	a1, err := strconv.Atoi(a)
-	l1, err := strconv.Atoi(c)
+	allowance, err = strconv.ParseInt(allowanceStr, 10, 64)
+	if err != nil {
+		return 0, 0, fmt.Errorf("failed to getState: value could not be parsed into int64: %w", err)
+	}
 
-	return int64(a1), int64(l1), err
+	lastAllowedTimeStampNS, err = strconv.ParseInt(lastAllowedTimeStampNSStr, 10, 64)
+	if err != nil {
+		return 0, 0, fmt.Errorf("failed to getState: value could not be parsed into int64: %w", err)
+	}
+
+	return allowance, lastAllowedTimeStampNS, err
 }
 
 // FlushAll ...

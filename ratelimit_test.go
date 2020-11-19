@@ -15,6 +15,31 @@ var (
 	defaultLimiter       = New(defaultTestRate, defaultTestInterval, defaultTestBurst, defaultMemoryBackend)
 )
 
+func TestRefillAllowance(t *testing.T) {
+	for in, out := range refillAllowanceTests {
+		newAllowance, newLastAccessedTimestampNS := refillAllowance(
+			in.currentTime,
+			in.previousAllowance,
+			in.previousLastAccessedTimestampNS,
+			in.burst,
+			in.interval,
+			in.rate,
+		)
+
+		if newAllowance != out.expectedNewAllowance {
+			t.Logf("(test %s) newAllowance %v != expectedNewAllowance %v", in.desc, newAllowance, out.expectedNewAllowance)
+			println(in.previousAllowance, newAllowance, out.expectedNewAllowance)
+		
+			t.Fail()
+		}
+
+		if newLastAccessedTimestampNS != out.expectedNewLastAccessedTimestampNS {
+			t.Logf("(test %s) lastAccessed %v != expectedLastAccessed %v", in.desc, newLastAccessedTimestampNS, out.expectedNewLastAccessedTimestampNS)
+			t.Fail()
+		}
+	}
+}
+
 func TestAllowsBurst(t *testing.T) {
 	t.Skip()
 	u1 := "Foo"
@@ -137,29 +162,4 @@ var refillAllowanceTests = map[refillAllowanceInput]refillAllowanceOutput{
 	// the following cases should cause a refill
 	{"elapsed > 10 years results in max refill", now, 5, 0, 10, second, 1}: {10, now},
 	{"elapsed == rate results in 1 refill", now, 5, oneSecondAgo, 10, second, 1}: {6, now},
-}
-
-func TestRefillAllowance(t *testing.T) {
-	for in, out := range refillAllowanceTests {
-		newAllowance, newLastAccessedTimestampNS := refillAllowance(
-			in.currentTime,
-			in.previousAllowance,
-			in.previousLastAccessedTimestampNS,
-			in.burst,
-			in.interval,
-			in.rate,
-		)
-
-		if newAllowance != out.expectedNewAllowance {
-			t.Logf("(test %s) newAllowance %v != expectedNewAllowance %v", in.desc, newAllowance, out.expectedNewAllowance)
-			println(in.previousAllowance, newAllowance, out.expectedNewAllowance)
-		
-			t.Fail()
-		}
-
-		if newLastAccessedTimestampNS != out.expectedNewLastAccessedTimestampNS {
-			t.Logf("(test %s) lastAccessed %v != expectedLastAccessed %v", in.desc, newLastAccessedTimestampNS, out.expectedNewLastAccessedTimestampNS)
-			t.Fail()
-		}
-	}
 }
