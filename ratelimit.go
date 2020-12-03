@@ -151,6 +151,6 @@ func refillAllowance(currentTime, previousAllowance, previousLastAccessedTimesta
 		return newAllowance, currentTime
 	}
 
-	// always return currentTime
-	return previousAllowance, currentTime
+	// if no changes are made to the allowance, return the previous allowance and accessedTimestamp
+	return previousAllowance, previousLastAccessedTimestampNS
 }
