@@ -15,6 +15,38 @@ var (
 	defaultLimiter       = New(defaultTestRate, defaultTestInterval, defaultTestBurst, defaultMemoryBackend)
 )
 
+type refillAllowanceInput struct {
+	desc                            string
+	currentTime                     int64
+	previousAllowance               int64
+	previousLastAccessedTimestampNS int64
+	burst                           int64
+	interval                        int64
+	rate                            int64
+}
+
+type refillAllowanceOutput struct {
+	expectedNewAllowance               int64
+	expectedNewLastAccessedTimestampNS int64
+}
+
+var second = int64(time.Second)
+var tNow = time.Now()
+var now = tNow.UnixNano()
+var tOneSecondAgo = tNow.Add(-1 * time.Second)
+var oneSecondAgo = tOneSecondAgo.UnixNano()
+var fiveSecondAgo = tNow.Add(-5 * time.Second).UnixNano() 
+
+var refillAllowanceTests = map[refillAllowanceInput]refillAllowanceOutput{
+	// the following cases should not result in a refill
+	{"!bucketHasRoom results in no refill", now, 6, 0, 5, 10, 10}: {6, 0},
+	{"!intervalhasPassed results in no refill", 0, 7, 0, 10, 10, 10}: {7, 0},
+	// the following cases should cause a refill
+	{"elapsed > 10 years results in max refill", now, 5, 0, 10, second, 1}: {10, now},
+	{"elapsed == rate results in 1 refill", now, 5, oneSecondAgo, 10, second, 1}: {6, now},
+	{"should refill 5 in 5 seconds", now, 0, fiveSecondAgo, 5, second, 1}: {5, now},
+}
+
 func TestRefillAllowance(t *testing.T) {
 	for in, out := range refillAllowanceTests {
 		newAllowance, newLastAccessedTimestampNS := refillAllowance(
@@ -134,32 +166,3 @@ func TestConcurrentUse(t *testing.T) {
 	}
 }
 
-type refillAllowanceInput struct {
-	desc                            string
-	currentTime                     int64
-	previousAllowance               int64
-	previousLastAccessedTimestampNS int64
-	burst                           int64
-	interval                        int64
-	rate                            int64
-}
-
-type refillAllowanceOutput struct {
-	expectedNewAllowance               int64
-	expectedNewLastAccessedTimestampNS int64
-}
-
-var second = int64(time.Second)
-var tNow = time.Now()
-var now = tNow.UnixNano()
-var tOneSecondAgo = tNow.Add(-1 * time.Second)
-var oneSecondAgo = tOneSecondAgo.UnixNano()
-
-var refillAllowanceTests = map[refillAllowanceInput]refillAllowanceOutput{
-	// the following cases should not result in a refill
-	{"!bucketHasRoom results in no refill", now, 6, 0, 5, 10, 10}: {6, now},
-	{"!intervalhasPassed results in no refill", 0, 7, 0, 10, 10, 10}: {7, 0},
-	// the following cases should cause a refill
-	{"elapsed > 10 years results in max refill", now, 5, 0, 10, second, 1}: {10, now},
-	{"elapsed == rate results in 1 refill", now, 5, oneSecondAgo, 10, second, 1}: {6, now},
-}

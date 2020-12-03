@@ -76,3 +76,7 @@ func main() {
 * Expand testcases in refillAllowanceTests
 * Go testing badge
 * Some kind of benchmarking
+* more specific error handling within ratelimit.go, remove negative value returns 
+* map out all possible code paths perhaps with code coverage tooling
+* create tags/releases to protect backwards compatibility
+* create example usages within an http application / http middleware
