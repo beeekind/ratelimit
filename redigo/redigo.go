@@ -1,6 +1,6 @@
 package redigo
 
-// redigo implements the b3ntly/ratelimit.Backend interface with gomodule/redigo/redis
+// redigo implements the beeekind/ratelimit.Backend interface with gomodule/redigo/redis
 //
 // redigo implements the ratelimit.Backend interface by storing the values of
 // allowance and lastAccessedTimestampNS using the redis hash set data structure or
@@ -49,9 +49,9 @@ func (b *Backend) GetState(key string) (allowance int64, lastAccessedTimestampNS
 	hashSet, err := redis.Int64Map(b.poolDo("HGETALL", key))
 	if err != nil {
 		// non-existent keys represent the first time Allow() is called for a given key and should return
-		// zero values which will be handled properly in b3ntly/ratelimit, there is some discussion that we 
+		// zero values which will be handled properly in beeekind/ratelimit, there is some discussion that we
 		// should instead return a named error that is handled more explicitly one level up the stack so this
-		// behavior may change (!) in future releases 
+		// behavior may change (!) in future releases
 		if err.Error() == "redigo: nil returned" {
 			return 0, 0, nil
 		}
@@ -63,7 +63,7 @@ func (b *Backend) GetState(key string) (allowance int64, lastAccessedTimestampNS
 	if !allowanceExists {
 		return 0, 0, fmt.Errorf("failed to getState: %s hashSet did not contain key %s", key, allowanceKey)
 	}
-		
+
 	lastAccessedTimestampNS, lastAccessedTimestampNSExists := hashSet[accessedKey]
 	if !lastAccessedTimestampNSExists {
 		return 0, 0, fmt.Errorf("failed to getState: %s hashSet did not contain key %s", key, accessedKey)
@@ -88,9 +88,9 @@ func (b *Backend) GetStateKey(key string) (allowance int64, lastAccessedTimestam
 	s, err := redis.String(b.poolDo("GET", key))
 	if err != nil {
 		// non-existent keys represent the first time Allow() is called for a given key and should return
-		// zero values which will be handled properly in b3ntly/ratelimit, there is some discussion that we 
+		// zero values which will be handled properly in beeekind/ratelimit, there is some discussion that we
 		// should instead return a named error that is handled more explicitly one level up the stack so this
-		// behavior may change (!) in future releases 
+		// behavior may change (!) in future releases
 		if err.Error() == "redigo: nil returned" {
 			return 0, 0, nil
 		}
