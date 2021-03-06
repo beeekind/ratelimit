@@ -1,6 +1,6 @@
-module github.com/b3ntly/ratelimit
+module github.com/beeekind/ratelimit
 
-go 1.15
+go 1.16
 
 require (
 	github.com/gomodule/redigo v1.8.2

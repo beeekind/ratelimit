@@ -1,6 +1,6 @@
 package radix
 
-// redigo implements the b3ntly/ratelimit.Backend interface with mediocregopher/radix/v3
+// redigo implements the beeekind/ratelimit.Backend interface with mediocregopher/radix/v3
 //
 // redigo implements the ratelimit.Backend interface by storing the values of
 // allowance and lastAccessedTimestampNS using the redis hash set data structure or

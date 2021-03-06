@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/b3ntly/ratelimit"
-	"github.com/b3ntly/ratelimit/redigo"
+	"github.com/beeekind/ratelimit"
+	"github.com/beeekind/ratelimit/redigo"
 	"github.com/gomodule/redigo/redis"
 )
 
